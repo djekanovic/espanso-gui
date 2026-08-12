@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+release/
+
+# Electron
+*.log
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+
+# Local clone of espanso/website (docs source) for offline reference -
+# see "docs" in package.json or ask Claude; not part of this project
+.espanso-docs/
+
+# Freebuff workspace database
+.freebuff/
+
+# Local standalone-preview test harness
+.flash-test/
