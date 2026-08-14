@@ -1,0 +1,69 @@
+name: Release
+
+# Builds Windows, macOS, and Linux packages natively on their own runners
+# (electron-builder can't cross-compile a .dmg or reliably cross-compile
+# Linux targets from Windows) and attaches them to a GitHub Release.
+#
+# Trigger a release by pushing a tag: `git tag v1.2.0 && git push origin v1.2.0`
+# Or run it manually via the Actions tab (workflow_dispatch) to build
+# without publishing a release - artifacts are still uploaded to the run.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run dist
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: espanso-gui-${{ matrix.os }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            release/*.AppImage
+            release/*.deb
+          if-no-files-found: ignore
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          body: |
+            ## What's new
+
+            - **Config backup on first launch** — optional welcome step that snapshots your existing Espanso setup. The `config` and `match` folders are renamed to `config_backup` and `match_backup`, then copied back as working folders, so nested files and extra YAML stay intact
+            - **Safer match editing** — recursive match files, `_manifest.yml` package metadata, `espanso path config` for a custom config dir, and YAML keys like `imports` preserved on save
+            - **Snippets polish** — newest snippets first, word-boundary hint for bare-word triggers, and dashboard paths wrap inside the card
+
+            > Builds are unsigned — Windows SmartScreen and macOS Gatekeeper will warn on first launch.
+          files: |
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            release/*.AppImage
+            release/*.deb
